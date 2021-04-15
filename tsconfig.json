@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "esModuleInterop": true,
+    "incremental": false,
+    "jsx": "preserve",
+    "module": "ES2020",
+    "moduleResolution": "node",
+    "outDir": "public",
+    "paths": {},
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "target": "esnext",
+    "skipLibCheck": true,
+    "noEmit": true,
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
