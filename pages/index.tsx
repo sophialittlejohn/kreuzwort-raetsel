@@ -1,5 +1,8 @@
 import { Data, MockData } from "../types";
-import { findCommonElements, getCommonLetters } from "../utils/findCommonElements";
+import {
+  findCommonElements,
+  getCommonLetters,
+} from "../utils/findCommonElements";
 
 import Head from "next/head";
 import { doesAnswerFitInGrid } from "../utils/doesAnswerFitInGrid";
@@ -34,8 +37,7 @@ const SmallInfos = styled.div`
   font-size: 12px;
   color: rgba(0, 0, 0, 0.5);
   align-self: flex-start;
-
-`
+`;
 
 const StyledInput = styled.input`
   height: 100%;
@@ -44,10 +46,10 @@ const StyledInput = styled.input`
   border: none;
   font-size: ${({ size }) => `${size}px`};
   text-align: center;
-`
+`;
 
 /**
- * 
+ *
  * @param number the number of columns/rows
  * @returns coordinates of each cell in a quadratic plane
  */
@@ -78,70 +80,108 @@ const generateGridSkelleton = () => {
 export type Grid = ReturnType<typeof generateGridSkelleton>;
 
 const placeFirstAnswerInGrid = (grid: Grid, items: Data[]) => {
-  const answerOneWithQuestion = [items[0].question, ...items[0].answer.toUpperCase().split('')]
+  const answerOneWithQuestion = [
+    items[0].question,
+    ...items[0].answer.toUpperCase().split(""),
+  ];
   // check if word fits in grid
   answerOneWithQuestion.forEach((letter, letterIndex) => {
-    const replacementItem = grid.find(gridItem =>
-      (gridItem.coordinates.y === 4 && gridItem.coordinates.x === letterIndex + 1))
+    const replacementItem = grid.find(
+      (gridItem) =>
+        gridItem.coordinates.y === 4 &&
+        gridItem.coordinates.x === letterIndex + 1
+    );
     // this shouldn't work, potential source for bugs
-    replacementItem.value = letter
-  })
-}
+    replacementItem.value = letter;
+  });
+};
 
-const placeSecondAnswerInGrid = (grid: Grid, referenceGridItem: any, items: Data[]) => {
-  const answerTwoWithQuestion = [items[1].question, ...items[1].answer.toUpperCase().split('')]
+const placeSecondAnswerInGrid = (
+  grid: Grid,
+  referenceGridItem: any,
+  items: Data[]
+) => {
+  const answerTwoWithQuestion = [
+    items[1].question,
+    ...items[1].answer.toUpperCase().split(""),
+  ];
 
   answerTwoWithQuestion.forEach((letter, letterIndex) => {
-    const replacementItem = grid.find(gridItem => {
-
-      return gridItem.coordinates.y === letterIndex + 1 && gridItem.coordinates.x === referenceGridItem.coordinates.x
-    })
+    const replacementItem = grid.find((gridItem) => {
+      return (
+        gridItem.coordinates.y === letterIndex + 1 &&
+        gridItem.coordinates.x === referenceGridItem.coordinates.x
+      );
+    });
 
     // this shouldn't work, potential source for bugs
-    replacementItem.value = letter
-  })
-}
+    replacementItem.value = letter;
+  });
+};
 
 const enhanceGridSkelleton = (grid: Grid, unsortedItems: Data[]): Grid => {
   // sort answers by length before processing data
   const items = sortItemsDesc(unsortedItems);
-  const answerOneLetters = items[0].answer.toUpperCase().split('')
-  const answerTwoWithQuestion = [items[1].question, ...items[1].answer.toUpperCase().split('')]
+  const answerOneLetters = items[0].answer.toUpperCase().split("");
+  const answerTwoWithQuestion = [
+    items[1].question,
+    ...items[1].answer.toUpperCase().split(""),
+  ];
 
-  placeFirstAnswerInGrid(grid, items)
+  placeFirstAnswerInGrid(grid, items);
   // find word with one letter in common with the letters in the first word
   const answerTwo = items.find((item, index) => {
     if (index !== 0) {
-      return findCommonElements(item.answer.toUpperCase().split(''), answerOneLetters)
+      return findCommonElements(
+        item.answer.toUpperCase().split(""),
+        answerOneLetters
+      );
     }
-  })
+  });
 
   // get letters than intersect
-  const commonLetters = getCommonLetters(items[1].answer.toUpperCase().split(''), answerOneLetters)
+  const commonLetters = getCommonLetters(
+    items[1].answer.toUpperCase().split(""),
+    answerOneLetters
+  );
 
   // get coordinates of items that intersect
   let intersectingItems: Grid = [];
-  commonLetters.forEach(letter => {
-    grid.forEach(gridItem => {
+  commonLetters.forEach((letter) => {
+    grid.forEach((gridItem) => {
       if (gridItem.value === letter) {
-        intersectingItems.push(gridItem)
+        intersectingItems.push(gridItem);
       }
-    })
-  })
+    });
+  });
 
-  const answerFits = doesAnswerFitInGrid(answerTwo.answer, intersectingItems)
+  const answerFits = doesAnswerFitInGrid(answerTwo.answer, intersectingItems);
 
   if (answerFits?.intersectingItem)
-    placeSecondAnswerInGrid(grid, answerFits.intersectingItem, items)
+    placeSecondAnswerInGrid(grid, answerFits.intersectingItem, items);
 
-  return grid
-}
+  return grid;
+};
 
 export default function Home() {
   const skeleton = generateGridSkelleton();
-  const grid = enhanceGridSkelleton(skeleton, mockData.data)
+  const grid = enhanceGridSkelleton(skeleton, mockData.data);
 
   const [gridState, setGridState] = useState(grid);
+
+  const updateGridValue = (id: number, value: string) => {
+    setGridState((prevGrid) =>
+      prevGrid.map((gridItem) => {
+        if (gridItem.id === id) {
+          return {
+            ...gridItem,
+            value: value.toUpperCase(),
+          };
+        }
+        return gridItem;
+      })
+    );
+  };
 
   return (
     <div className={styles.container}>
@@ -152,13 +192,25 @@ export default function Home() {
       <main>
         <h1>Kreuzworträtsel</h1>
         <Grid itemCount={COLUMNS_COUNT}>
-          {grid.map((cell, index) => {
+          {gridState.map((cell, index) => {
             return (
               <Cell size={cell.value.length > 1 ? 16 : 32} key={index}>
-                <SmallInfos>id:{cell.id} | x:{cell.coordinates.x} y:{cell.coordinates.y}</SmallInfos>
+                <SmallInfos>
+                  id:{cell.id} | x:{cell.coordinates.x} y:{cell.coordinates.y}
+                </SmallInfos>
                 {/* <p >{cell.value}</p> */}
-                {cell.value.length > 1 ? <p >{cell.value}</p> :
-                  <StyledInput size={cell.value.length > 1 ? 16 : 32} maxLength={1} onChange={() => console.log('changing')} value={cell.value} />}
+                {cell.value.length > 1 ? (
+                  <p>{cell.value}</p>
+                ) : (
+                  <StyledInput
+                    size={cell.value.length > 1 ? 16 : 32}
+                    maxLength={1}
+                    onChange={(e) => {
+                      updateGridValue(cell.id, e.target.value);
+                    }}
+                    value={cell.value}
+                  />
+                )}
               </Cell>
             );
           })}
