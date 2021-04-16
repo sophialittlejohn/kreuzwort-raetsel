@@ -1,0 +1,26 @@
+First word: Engel
+Second word: Mango
+
+Intersecting letters: N & G
+
+N --> x: 3, y: 4
+G --> x: 4, y: 4
+
+First letter (N) in common index: 2 --> preLICLength
+
+Does first half of word fit?
+- if y-coord - preLICLength & one extra cell for question > 0
+- if (4 - (2 + 1))  ✅
+
+
+Does second half of word fit?
+- if y-coord + postLICLength <= COLUMNS_COUNT --> it fits ✅
+- if (4 + 2) ✅
+
+Next Steps:
+
+- place input over cells with letter
+- track input in state
+- add two fields for solution (id: 22, id: 33) at top 
+- mark solutionWordCell in grid
+- validate solution with a button
