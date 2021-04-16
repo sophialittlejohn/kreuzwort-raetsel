@@ -49,7 +49,7 @@ const StyledInput = styled.input`
   font-size: ${({ size }) => `${size}px`};
   text-align: center;
   background: ${({ isSolutionKey }) =>
-    isSolutionKey ? "gray" : "transparent"};
+    isSolutionKey ? "#c1c1c1" : "transparent"};
 `;
 
 const SolutionChar = styled.div`
@@ -60,6 +60,11 @@ const SolutionChar = styled.div`
   display: inline-flex;
   justify-content: center;
   align-items: center;
+`;
+
+const SolutionWordWrapper = styled.div`
+  display: inline-flex;
+  justify-content: center;
 `;
 
 /**
@@ -230,11 +235,11 @@ export default function Home() {
       <main>
         <h1>Kreuzworträtsel</h1>
         <h3>Lösungswort</h3>
-        <>
+        <SolutionWordWrapper>
           {solutionCells.map((char) => {
             return <SolutionChar>{char.value}</SolutionChar>;
           })}
-        </>
+        </SolutionWordWrapper>
         <Grid itemCount={COLUMNS_COUNT}>
           {gridState.map((cell, index) => {
             const isSolutionKey = solutionCells.find((solutionKey) => {
