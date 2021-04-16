@@ -1,13 +1,15 @@
 import { Data, MockData } from "../types";
+import { findCommonElements, getCommonLetters } from "../utils/findCommonElements";
 
 import Head from "next/head";
-import { findCommonElements } from "../utils/findCommonElements";
+import { doesAnswerFitInGrid } from "../utils/doesAnswerFitInGrid";
 import { mockData } from "../mockData";
+import { sortItemsDesc } from "../utils/sortItemsDesc";
 import styled from "styled-components";
 // @ts-ignore
 import styles from "../styles/Home.module.css";
 
-const COLUMNS_COUNT = 6;
+export const COLUMNS_COUNT = 6;
 
 const Grid = styled.div`
   display: grid;
@@ -25,6 +27,12 @@ const Cell = styled.div<{ size: number }>`
   font-size: ${({ size }) => `${size}px`};
   padding: 4px;
 `;
+
+const SmallInfos = styled.div`
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.5);
+  align-self: flex-start;
+`
 
 /**
  * 
@@ -55,19 +63,26 @@ const generateGridSkelleton = () => {
   });
 };
 
-type Grid = ReturnType<typeof generateGridSkelleton>;
+export type Grid = ReturnType<typeof generateGridSkelleton>;
 
 const placeFirstAnswerInGrid = (grid: Grid, items: Data[]) => {
   const answerOneWithQuestion = [items[0].question, ...items[0].answer.toUpperCase().split('')]
+  // check if word fits in grid
   answerOneWithQuestion.forEach((letter, letterIndex) => {
     const replacementItem = grid.find(gridItem =>
-      (gridItem.coordinates.y === 3 && gridItem.coordinates.x === letterIndex + 1))
+      (gridItem.coordinates.y === 4 && gridItem.coordinates.x === letterIndex + 1))
+    // this shouldn't work, potential source for bugs
     replacementItem.value = letter
   })
 }
 
-const enhanceGridSkelleton = (grid: Grid, items: Data[]): Grid => {
+const enhanceGridSkelleton = (grid: Grid, unsortedItems: Data[]): Grid => {
+  // sort answers by length before processing data
+  const items = sortItemsDesc(unsortedItems);
   const answerOneLetters = items[0].answer.toUpperCase().split('')
+  const answerTwoWithQuestion = [items[1].question, ...items[1].answer.toUpperCase().split('')]
+  console.log("➜ ~ answerTwoWithQuestion", answerTwoWithQuestion)
+
   placeFirstAnswerInGrid(grid, items)
   // find word with one letter in common with the letters in the first word
   const answerTwo = items.find((item, index) => {
@@ -75,12 +90,30 @@ const enhanceGridSkelleton = (grid: Grid, items: Data[]): Grid => {
       return findCommonElements(item.answer.toUpperCase().split(''), answerOneLetters)
     }
   })
-  console.log("➜ ~ answerTwo", answerTwo)
-  // find index of LIC (letter in common)
+
+  // get letters than intersect
+  const commonLetters = getCommonLetters(items[1].answer.toUpperCase().split(''), answerOneLetters)
+
+  // get coordinates of items that intersect
+  let intersectingItems: Grid = [];
+  commonLetters.forEach(letter => {
+    grid.forEach(gridItem => {
+      if (gridItem.value === letter) {
+        intersectingItems.push(gridItem)
+      }
+    })
+  })
+
+  // does next answer fit in grid?
+  // IDEA: return letter to place if yes, return false if not?
+  const answerFits = doesAnswerFitInGrid(answerTwo.answer, intersectingItems)
+  console.log("➜ ~ answerFits expecting true", answerFits)
+
   // find lengths of:
   //  - preLIC string
   //  - postLIC string
   // find LIC's y-coord in grid and make sure difference in gridItem.y - preLIC > 0 and gridItem.y + postLIC < COLUMNS_COUNT
+  // check if left and right of letter is free before placing it, unless its the LIC or the end of the grid
   // if yes, place answer there similarly to placeFirstAnswerInGrid except using x-coord
   // if no, look for another letter in common or move on to next answer
 
@@ -100,7 +133,12 @@ export default function Home() {
         <h1>Kreuzworträtsel</h1>
         <Grid itemCount={COLUMNS_COUNT}>
           {grid.map((cell, index) => {
-            return <Cell size={cell.value.length > 1 ? 16 : 32} key={index}>{cell.value}</Cell>;
+            return (
+              <Cell size={cell.value.length > 1 ? 16 : 32} key={index}>
+                <SmallInfos>id:{cell.id} | x:{cell.coordinates.x} y:{cell.coordinates.y}</SmallInfos>
+                {cell.value}
+              </Cell>
+            );
           })}
         </Grid>
       </main>
