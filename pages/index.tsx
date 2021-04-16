@@ -24,7 +24,11 @@ const Grid = styled.div`
   box-sizing: content-box;
 `;
 
-const Cell = styled.div<{ size: number; isSolutionKey: boolean }>`
+const Cell = styled.div<{
+  size: number;
+  isSolutionKey: boolean;
+  validate: boolean;
+}>`
   border: solid 1px;
   display: flex;
   justify-content: center;
@@ -32,6 +36,12 @@ const Cell = styled.div<{ size: number; isSolutionKey: boolean }>`
   font-size: ${({ size }) => `${size}px`};
   padding: 4px;
   position: relative;
+  background-color: ${({ validate, correct }) =>
+    validate && correct
+      ? "rgba(66, 245, 99, 0.5)"
+      : validate && correct === false
+      ? "rgba(245, 66, 66, 0.5)"
+      : "transparent"};
 `;
 
 const SmallInfos = styled.div<{ shouldDisplayInfo: boolean }>`
@@ -86,6 +96,7 @@ const generateGridSkelleton = () => {
         return {
           id: index + 1,
           value: "",
+          smt: "",
           coordinates: {
             x: (index % COLUMNS_COUNT) + 1,
             y: rowIndex + 1,
@@ -196,7 +207,7 @@ export default function Home() {
   const [gridState, setGridState] = useState(grid);
   const [shouldDisplayInfo, toggleCellInfo] = useState(false);
   const [solutionCells, setSolutionCells] = useState(selectSolutionCells());
-  console.log(solutionCells);
+  const [validate, setValidate] = useState(false);
 
   const updateGridValue = (id: number, value: string) => {
     setGridState((prevGrid) =>
@@ -204,7 +215,7 @@ export default function Home() {
         if (gridItem.id === id) {
           return {
             ...gridItem,
-            value: value.toUpperCase(),
+            smt: value.toUpperCase(),
           };
         }
         return gridItem;
@@ -218,7 +229,7 @@ export default function Home() {
         if (gridItem.id === id) {
           return {
             ...gridItem,
-            value: value.toUpperCase(),
+            smt: value.toUpperCase(),
           };
         }
         return gridItem;
@@ -236,37 +247,52 @@ export default function Home() {
         <h1>Kreuzworträtsel</h1>
         <h3>Lösungswort</h3>
         <SolutionWordWrapper>
-          {solutionCells.map((char) => {
-            return <SolutionChar>{char.value}</SolutionChar>;
-          })}
+          {solutionCells.map((char, index) => (
+            <SolutionChar key={index}>{char.smt}</SolutionChar>
+          ))}
         </SolutionWordWrapper>
         <Grid itemCount={COLUMNS_COUNT}>
           {gridState.map((cell, index) => {
-            const isSolutionKey = solutionCells.find((solutionKey) => {
-              if (solutionKey.id === cell.id) {
-                return solutionKey;
-              }
-            });
+            const isSolutionCell = solutionCells.find(
+              (solutionKey) => solutionKey.id === cell.id
+            );
+            console.log(
+              "correct?",
+              cell.smt && cell.smt.length > 0
+                ? cell.value === cell.smt && cell.value.length > 0
+                : false,
+              cell
+            );
             return (
-              <Cell size={cell.value.length > 1 ? 16 : 32} key={index}>
+              <Cell
+                size={cell.value.length > 1 ? 16 : 32}
+                key={index}
+                validate={validate}
+                correct={
+                  cell.smt && cell.smt.length > 0
+                    ? cell.value === cell.smt
+                    : cell.value.length > 0
+                    ? false
+                    : undefined
+                }
+              >
                 <SmallInfos shouldDisplayInfo={true}>
                   id:{cell.id} | x:{cell.coordinates.x} y:{cell.coordinates.y}
                 </SmallInfos>
-                {/* <p >{cell.value}</p> */}
                 {cell.value.length > 1 ? (
                   <p>{cell.value}</p>
                 ) : (
                   <StyledInput
-                    isSolutionKey={isSolutionKey}
+                    isSolutionKey={isSolutionCell}
                     size={cell.value.length > 1 ? 16 : 32}
                     maxLength={1}
                     onChange={(e) => {
-                      if (isSolutionKey) {
+                      if (isSolutionCell) {
                         updateSolutionValue(cell.id, e.target.value);
                       }
                       updateGridValue(cell.id, e.target.value);
                     }}
-                    value={cell.value}
+                    value={cell.smt}
                   />
                 )}
               </Cell>
@@ -276,6 +302,7 @@ export default function Home() {
         <button onClick={() => toggleCellInfo(!shouldDisplayInfo)}>
           toggle cell info
         </button>
+        <button onClick={() => setValidate(!validate)}>Check answers</button>
       </main>
     </div>
   );

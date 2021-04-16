@@ -6,13 +6,13 @@ export const mockData: MockData = {
   data: [
     {
       id: 3,
-      question: "Was fällt nicht vom Himmel?",
+      question: "Was fällt nicht vom Himmel? (5) ➡️",
       answer: "Engel",
       direction: "vertical",
     },
     {
       id: 1,
-      question: "Tropical fruit",
+      question: "Tropical fruit (5) ⬇️",
       answer: "Mango",
       direction: "horizontal",
     },
