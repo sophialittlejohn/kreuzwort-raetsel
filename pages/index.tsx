@@ -8,6 +8,7 @@ import { sortItemsDesc } from "../utils/sortItemsDesc";
 import styled from "styled-components";
 // @ts-ignore
 import styles from "../styles/Home.module.css";
+import { useState } from "react";
 
 export const COLUMNS_COUNT = 6;
 
@@ -26,12 +27,23 @@ const Cell = styled.div<{ size: number }>`
   align-items: center;
   font-size: ${({ size }) => `${size}px`};
   padding: 4px;
+  position: relative;
 `;
 
 const SmallInfos = styled.div`
   font-size: 12px;
   color: rgba(0, 0, 0, 0.5);
   align-self: flex-start;
+
+`
+
+const StyledInput = styled.input`
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  border: none;
+  font-size: ${({ size }) => `${size}px`};
+  text-align: center;
 `
 
 /**
@@ -76,12 +88,25 @@ const placeFirstAnswerInGrid = (grid: Grid, items: Data[]) => {
   })
 }
 
+const placeSecondAnswerInGrid = (grid: Grid, referenceGridItem: any, items: Data[]) => {
+  const answerTwoWithQuestion = [items[1].question, ...items[1].answer.toUpperCase().split('')]
+
+  answerTwoWithQuestion.forEach((letter, letterIndex) => {
+    const replacementItem = grid.find(gridItem => {
+
+      return gridItem.coordinates.y === letterIndex + 1 && gridItem.coordinates.x === referenceGridItem.coordinates.x
+    })
+
+    // this shouldn't work, potential source for bugs
+    replacementItem.value = letter
+  })
+}
+
 const enhanceGridSkelleton = (grid: Grid, unsortedItems: Data[]): Grid => {
   // sort answers by length before processing data
   const items = sortItemsDesc(unsortedItems);
   const answerOneLetters = items[0].answer.toUpperCase().split('')
   const answerTwoWithQuestion = [items[1].question, ...items[1].answer.toUpperCase().split('')]
-  console.log("➜ ~ answerTwoWithQuestion", answerTwoWithQuestion)
 
   placeFirstAnswerInGrid(grid, items)
   // find word with one letter in common with the letters in the first word
@@ -104,18 +129,10 @@ const enhanceGridSkelleton = (grid: Grid, unsortedItems: Data[]): Grid => {
     })
   })
 
-  // does next answer fit in grid?
-  // IDEA: return letter to place if yes, return false if not?
   const answerFits = doesAnswerFitInGrid(answerTwo.answer, intersectingItems)
-  console.log("➜ ~ answerFits expecting true", answerFits)
 
-  // find lengths of:
-  //  - preLIC string
-  //  - postLIC string
-  // find LIC's y-coord in grid and make sure difference in gridItem.y - preLIC > 0 and gridItem.y + postLIC < COLUMNS_COUNT
-  // check if left and right of letter is free before placing it, unless its the LIC or the end of the grid
-  // if yes, place answer there similarly to placeFirstAnswerInGrid except using x-coord
-  // if no, look for another letter in common or move on to next answer
+  if (answerFits?.intersectingItem)
+    placeSecondAnswerInGrid(grid, answerFits.intersectingItem, items)
 
   return grid
 }
@@ -123,6 +140,9 @@ const enhanceGridSkelleton = (grid: Grid, unsortedItems: Data[]): Grid => {
 export default function Home() {
   const skeleton = generateGridSkelleton();
   const grid = enhanceGridSkelleton(skeleton, mockData.data)
+
+  const [gridState, setGridState] = useState(grid);
+
   return (
     <div className={styles.container}>
       <Head>
@@ -136,7 +156,9 @@ export default function Home() {
             return (
               <Cell size={cell.value.length > 1 ? 16 : 32} key={index}>
                 <SmallInfos>id:{cell.id} | x:{cell.coordinates.x} y:{cell.coordinates.y}</SmallInfos>
-                {cell.value}
+                {/* <p >{cell.value}</p> */}
+                {cell.value.length > 1 ? <p >{cell.value}</p> :
+                  <StyledInput size={cell.value.length > 1 ? 16 : 32} maxLength={1} onChange={() => console.log('changing')} value={cell.value} />}
               </Cell>
             );
           })}

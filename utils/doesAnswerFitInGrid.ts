@@ -5,7 +5,6 @@ export const doesAnswerFitInGrid = (answer: string, intersectingItems: Grid) => 
     const indexLIC = answer.toUpperCase().split('').findIndex(letter => letter === intersectingItems[0].value)
     const preLIC = answer.slice(0, indexLIC);
     const postLIC = answer.slice(indexLIC + 1);
-    console.log("➜ ~ indexLIC", { indexLIC, preLIC, postLIC, value: intersectingItems[0].value })
 
     // Does first half of word fit? --> preLIC.length + 1 to reserve one cell for the question
     const firstHalfFits = (intersectingItems[0].coordinates.y - (preLIC.length + 1)) > 0;
@@ -17,4 +16,6 @@ export const doesAnswerFitInGrid = (answer: string, intersectingItems: Grid) => 
     // TODO: make sure there's no letter of another word at the end secondHalf, if there is the word doesn't fit MANGOZ ⚡️
 
     return firstHalfFits && secondHalfFits
+        ? { indexLIC, preLIC, postLIC, intersectingItem: intersectingItems[0] }
+        : { intersectingItem: undefined }
 }
