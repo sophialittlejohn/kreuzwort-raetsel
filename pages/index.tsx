@@ -14,6 +14,7 @@ import styles from "../styles/Home.module.css";
 import { useState } from "react";
 
 export const COLUMNS_COUNT = 6;
+const SOLUTION_WORD = "GO";
 
 const Grid = styled.div`
   display: grid;
@@ -33,11 +34,11 @@ const Cell = styled.div<{ size: number }>`
   position: relative;
 `;
 
-const SmallInfos = styled.div`
+const SmallInfos = styled.div<{ shouldDisplayInfo: boolean }>`
   font-size: 12px;
   color: rgba(0, 0, 0, 0.5);
   align-self: flex-start;
-  z-index: 1;
+  z-index: ${({ shouldDisplayInfo }) => (shouldDisplayInfo ? 1 : 0)};
 `;
 
 const StyledInput = styled.input`
@@ -47,6 +48,10 @@ const StyledInput = styled.input`
   border: none;
   font-size: ${({ size }) => `${size}px`};
   text-align: center;
+`;
+
+const SolutionWord = styled.div`
+  background: gray;
 `;
 
 /**
@@ -169,6 +174,11 @@ export default function Home() {
   const grid = enhanceGridSkelleton(skeleton, mockData.data);
 
   const [gridState, setGridState] = useState(grid);
+  const [shouldDisplayInfo, toggleCellInfo] = useState(false);
+
+  const rederSolutionBox = (char) => {
+    console.log(char);
+  };
 
   const updateGridValue = (id: number, value: string) => {
     setGridState((prevGrid) =>
@@ -192,11 +202,16 @@ export default function Home() {
       </Head>
       <main>
         <h1>Kreuzworträtsel</h1>
+        <SolutionWord>
+          {SOLUTION_WORD.split("").map((char) => {
+            rederSolutionBox(char);
+          })}
+        </SolutionWord>
         <Grid itemCount={COLUMNS_COUNT}>
           {gridState.map((cell, index) => {
             return (
               <Cell size={cell.value.length > 1 ? 16 : 32} key={index}>
-                <SmallInfos>
+                <SmallInfos shouldDisplayInfo>
                   id:{cell.id} | x:{cell.coordinates.x} y:{cell.coordinates.y}
                 </SmallInfos>
                 {/* <p >{cell.value}</p> */}
@@ -216,6 +231,9 @@ export default function Home() {
             );
           })}
         </Grid>
+        <button onClick={() => toggleCellInfo(!shouldDisplayInfo)}>
+          toggle cell info
+        </button>
       </main>
     </div>
   );

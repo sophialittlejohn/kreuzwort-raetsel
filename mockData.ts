@@ -6,7 +6,7 @@ export const mockData: MockData = {
   data: [
     {
       id: 3,
-      question: "Was fällt nicht Himmel?",
+      question: "Was fällt nicht vom Himmel?",
       answer: "Engel",
       direction: "vertical",
     },
