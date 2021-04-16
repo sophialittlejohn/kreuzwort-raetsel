@@ -37,6 +37,7 @@ const SmallInfos = styled.div`
   font-size: 12px;
   color: rgba(0, 0, 0, 0.5);
   align-self: flex-start;
+  z-index: 1;
 `;
 
 const StyledInput = styled.input`
