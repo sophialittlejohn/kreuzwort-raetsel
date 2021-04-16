@@ -24,7 +24,7 @@ const Grid = styled.div`
   box-sizing: content-box;
 `;
 
-const Cell = styled.div<{ size: number }>`
+const Cell = styled.div<{ size: number; isSolutionKey: boolean }>`
   border: solid 1px;
   display: flex;
   justify-content: center;
@@ -48,10 +48,18 @@ const StyledInput = styled.input`
   border: none;
   font-size: ${({ size }) => `${size}px`};
   text-align: center;
+  background: ${({ isSolutionKey }) =>
+    isSolutionKey ? "gray" : "transparent"};
 `;
 
-const SolutionWord = styled.div`
-  background: gray;
+const SolutionChar = styled.div`
+  width: 50px;
+  height: 50px;
+  margin: 10px;
+  border: 1px solid;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 /**
@@ -173,15 +181,34 @@ export default function Home() {
   const skeleton = generateGridSkelleton();
   const grid = enhanceGridSkelleton(skeleton, mockData.data);
 
+  const selectSolutionCells = () => {
+    return grid.filter((gridItem) => {
+      if (gridItem.id === 22 || gridItem.id === 33) {
+        return gridItem;
+      }
+    });
+  };
   const [gridState, setGridState] = useState(grid);
   const [shouldDisplayInfo, toggleCellInfo] = useState(false);
-
-  const rederSolutionBox = (char) => {
-    console.log(char);
-  };
+  const [solutionCells, setSolutionCells] = useState(selectSolutionCells());
+  console.log(solutionCells);
 
   const updateGridValue = (id: number, value: string) => {
     setGridState((prevGrid) =>
+      prevGrid.map((gridItem) => {
+        if (gridItem.id === id) {
+          return {
+            ...gridItem,
+            value: value.toUpperCase(),
+          };
+        }
+        return gridItem;
+      })
+    );
+  };
+
+  const updateSolutionValue = (id: number, value: string) => {
+    setSolutionCells((prevGrid) =>
       prevGrid.map((gridItem) => {
         if (gridItem.id === id) {
           return {
@@ -202,16 +229,22 @@ export default function Home() {
       </Head>
       <main>
         <h1>Kreuzworträtsel</h1>
-        <SolutionWord>
-          {SOLUTION_WORD.split("").map((char) => {
-            rederSolutionBox(char);
+        <h3>Lösungswort</h3>
+        <>
+          {solutionCells.map((char) => {
+            return <SolutionChar>{char.value}</SolutionChar>;
           })}
-        </SolutionWord>
+        </>
         <Grid itemCount={COLUMNS_COUNT}>
           {gridState.map((cell, index) => {
+            const isSolutionKey = solutionCells.find((solutionKey) => {
+              if (solutionKey.id === cell.id) {
+                return solutionKey;
+              }
+            });
             return (
               <Cell size={cell.value.length > 1 ? 16 : 32} key={index}>
-                <SmallInfos shouldDisplayInfo>
+                <SmallInfos shouldDisplayInfo={true}>
                   id:{cell.id} | x:{cell.coordinates.x} y:{cell.coordinates.y}
                 </SmallInfos>
                 {/* <p >{cell.value}</p> */}
@@ -219,9 +252,13 @@ export default function Home() {
                   <p>{cell.value}</p>
                 ) : (
                   <StyledInput
+                    isSolutionKey={isSolutionKey}
                     size={cell.value.length > 1 ? 16 : 32}
                     maxLength={1}
                     onChange={(e) => {
+                      if (isSolutionKey) {
+                        updateSolutionValue(cell.id, e.target.value);
+                      }
                       updateGridValue(cell.id, e.target.value);
                     }}
                     value={cell.value}
