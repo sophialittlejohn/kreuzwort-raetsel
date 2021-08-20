@@ -119,7 +119,6 @@ const placeQuestionFields = (grid: Grid, config: Record<string, any>) => {
   console.log("grid", grid);
 
   config.map((field) => {
-    console.log("placeQuestionFields", field);
     const questionField = grid.find((gridItem) => {
       return (
         gridItem.coordinates.x === field.question.position.x &&
@@ -323,7 +322,6 @@ export default function Home() {
                     //   // updateGridValue(cell.id, e.target.value);
                   }}
                   value={cell.questions.map((question) => {
-                    console.log("heere", question);
                     return question.value;
                   })}
                 />
