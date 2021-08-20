@@ -54,10 +54,10 @@ const StyledInput = styled.input`
   font-size: ${({ size }) => `${size}px`};
   text-align: center;
   background: ${({ isSolutionKey, isQuestionField, isAdField }) => {
-    if (isSolutionKey) {
-      return "#c1c1c1";
-    } else if (isAdField) {
-      return "#0000 ";
+    if (isAdField) {
+      return "#363434";
+    } else if (isSolutionKey) {
+      return "#90EE90";
     } else if (isQuestionField) {
       return "#F8F400 ";
     } else return "transparent";
@@ -106,6 +106,7 @@ const generateGridSkelleton = () => {
           },
           amountOfQuesitons: 0,
           isQuestionfield: false,
+          isAdField: false,
           questions: [],
         };
       }
@@ -115,33 +116,43 @@ const generateGridSkelleton = () => {
 
 export type Grid = ReturnType<typeof generateGridSkelleton>;
 
-const placeQuestionFields = (grid: Grid, config: Record<string, any>) => {
-  console.log("grid", grid);
+const checkIfAdField = (currentField, config) => {
+  if (
+    currentField.coordinates.x >= config.adFields.XRange.start &&
+    currentField.coordinates.x <= config.adFields.XRange.end &&
+    currentField.coordinates.y >= config.adFields.YRange.start &&
+    currentField.coordinates.y <= config.adFields.YRange.end
+  ) {
+    return (currentField.isAdField = true);
+  }
+};
 
-  config.map((field) => {
-    const questionField = grid.find((gridItem) => {
-      return (
-        gridItem.coordinates.x === field.question.position.x &&
-        gridItem.coordinates.y === field.question.position.y
-      );
+const placeConfigInGridLayout = (grid: Grid, config: Record<string, any>) => {
+  config.fields.map((configField) => {
+    grid.map((currentField) => {
+      currentField.isAdField = checkIfAdField(currentField, config);
+      if (
+        currentField.coordinates.x === configField.question.position.x &&
+        currentField.coordinates.y === configField.question.position.y
+      ) {
+        currentField.amountOfQuesitons++;
+        if (currentField.amountOfQuesitons > 1) {
+          const newQuestion = {
+            id: configField.id,
+            value: "?",
+            questionDirection: configField.question.direction,
+          };
+          currentField.questions.push(newQuestion);
+        } else {
+          currentField.isQuestionfield = true;
+          currentField.questions.push({
+            id: configField.id,
+            value: "?",
+            questionDirection: configField.question.direction,
+          });
+        }
+      }
     });
-
-    questionField.amountOfQuesitons++;
-    if (questionField.amountOfQuesitons > 1) {
-      const newQuestion = {
-        id: field.id,
-        value: "?",
-        questionDirection: field.question.direction,
-      };
-      questionField.questions.push(newQuestion);
-    } else {
-      questionField.isQuestionfield = true;
-      questionField.questions.push({
-        id: field.id,
-        value: "?",
-        questionDirection: field.question.direction,
-      });
-    }
   });
 };
 
@@ -185,10 +196,6 @@ const placeQuestionFields = (grid: Grid, config: Record<string, any>) => {
 //   });
 // };
 
-const placeAdsInGrid = (grid: Grid, config: any) => {
-  console.log("placeAdsInGrid - config", config);
-};
-
 const enhanceGridSkelleton = (grid: Grid, unsortedItems: Data[]): Grid => {
   // sort answers by length before processing data
   const items = sortItemsDesc(unsortedItems);
@@ -209,7 +216,7 @@ const enhanceGridSkelleton = (grid: Grid, unsortedItems: Data[]): Grid => {
   //   }
   // });
 
-  placeQuestionFields(grid, crosswordConfig.fields);
+  placeConfigInGridLayout(grid, crosswordConfig);
 
   // get letters than intersect
   const commonLetters = getCommonLetters(
@@ -296,8 +303,12 @@ export default function Home() {
         <Grid itemCount={COLUMNS_COUNT}>
           {gridState.map((cell, index) => {
             const isSolutionKey = false;
-            const isAdField = false;
 
+            // console.log({
+            //   x: cell.coordinates.x,
+            //   y: cell.coordinates.y,
+            //   isAdfield: cell.isAdField,
+            // });
             return (
               <Cell
                 size={cell.questions[0]?.value.length > 1 ? 4 : 8}
@@ -309,8 +320,8 @@ export default function Home() {
                 <StyledInput
                   isSolutionKey={isSolutionKey}
                   isQuestionField={cell.isQuestionfield}
-                  isAdField={isAdField}
-                  disabled={cell.isQuestionfield}
+                  isAdField={cell.isAdField}
+                  disabled={cell.isQuestionfield || cell.isAdField}
                   size={cell.questions[0]?.value.length > 1 ? 16 : 32}
                   maxLength={1}
                   onChange={(e) => {

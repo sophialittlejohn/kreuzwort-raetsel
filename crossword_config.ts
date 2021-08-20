@@ -1,30 +1,8 @@
 export const crosswordConfig = {
-  adFields: [
-    {
-      width: {
-        start: {
-          x: 4,
-          y: 3,
-        },
-        end: {
-          x: 8,
-          y: 3,
-        },
-      },
-    },
-    {
-      height: {
-        start: {
-          x: 4,
-          y: 3,
-        },
-        end: {
-          x: 4,
-          y: 12,
-        },
-      },
-    },
-  ],
+  adFields: {
+    XRange: { start: 4, end: 8 },
+    YRange: { start: 3, end: 12 },
+  },
   amountOfQuestions: 54,
   fields: [
     {
