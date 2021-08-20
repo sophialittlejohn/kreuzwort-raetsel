@@ -13,6 +13,7 @@ import styled from "styled-components";
 // @ts-ignore
 import styles from "../styles/Home.module.css";
 import { useState } from "react";
+import { words } from "../random-words";
 import { config } from "process";
 
 export const COLUMNS_COUNT = 13;
@@ -108,6 +109,7 @@ const generateGridSkelleton = () => {
           isQuestionfield: false,
           isAdField: false,
           questions: [],
+          value: "",
         };
       }
     }
@@ -127,164 +129,76 @@ const checkIfAdField = (currentField, config) => {
   }
 };
 
+const getWordByLength = (charCount) => {
+  return words.find((word) => word.length === charCount);
+};
+console.log("➜ ~ getWordByLength", getWordByLength(2));
+
 const placeConfigInGridLayout = (grid: Grid, config: Record<string, any>) => {
-  config.fields.map((configField) => {
-    grid.map((currentField) => {
+  config.fields.forEach((configField) => {
+    grid.forEach((currentField) => {
+      // console.log("➜ ~ currentField", currentField);
+      // black out add fields
       currentField.isAdField = checkIfAdField(currentField, config);
       if (
         currentField.coordinates.x === configField.question.position.x &&
         currentField.coordinates.y === configField.question.position.y
       ) {
-        currentField.amountOfQuesitons++;
-        if (currentField.amountOfQuesitons > 1) {
-          const newQuestion = {
-            id: configField.id,
-            value: "?",
-            questionDirection: configField.question.direction,
-          };
-          currentField.questions.push(newQuestion);
-        } else {
-          currentField.isQuestionfield = true;
-          currentField.questions.push({
-            id: configField.id,
-            value: "?",
-            questionDirection: configField.question.direction,
-          });
-        }
+        // add back if statement multuple questions in one cell
+        currentField.isQuestionfield = true;
+        currentField.questions.push({
+          id: configField.id,
+          value: "?",
+          questionDirection: configField.question.direction,
+          anwserLength: configField.answer.charCount,
+          answer: getWordByLength(configField.answer.charCount), // get random word with correct length here
+        });
       }
     });
+  });
+
+  grid.forEach((configCell) => {
+    if (configCell.questions[0]?.questionDirection === "down") {
+      const { answer } = configCell.questions[0];
+      const startCoordinates = configCell.coordinates;
+      // find start cell in grid
+      const field = grid.find((gridCell) => {
+        return (
+          JSON.stringify(gridCell.coordinates) ===
+          JSON.stringify(startCoordinates)
+        );
+      });
+      [...answer].forEach((letter, index) => {
+        // replace value in grid with y+n
+        const smt = grid.find((gridCell) => {
+          return (
+            JSON.stringify(gridCell.coordinates) ===
+            JSON.stringify({
+              x: startCoordinates.x,
+              y: startCoordinates.y + index + 1,
+            })
+          );
+        });
+        smt.value = letter;
+        console.log("➜ ~ smt", smt);
+      });
+      // question coord  y++ 3
+      // get grid cooridantes for each letter
+      // write value to field
+    }
   });
 };
 
-// const placeFirstAnswerInGrid = (grid: Grid, items: Data[]) => {
-//   const answerOneWithQuestion = [
-//     items[0].question,
-//     ...items[0].answer.toUpperCase().split(""),
-//   ];
-//   // check if word fits in grid
-//   answerOneWithQuestion.forEach((letter, letterIndex) => {
-//     const replacementItem = grid.find(
-//       (gridItem) =>
-//         gridItem.coordinates.y === 4 &&
-//         gridItem.coordinates.x === letterIndex + 1
-//     );
-//     // this shouldn't work, potential source for bugs
-//     replacementItem.value = letter;
-//   });
-// };
-
-// const placeSecondAnswerInGrid = (
-//   grid: Grid,
-//   referenceGridItem: any,
-//   items: Data[]
-// ) => {
-//   const answerTwoWithQuestion = [
-//     items[1].question,
-//     ...items[1].answer.toUpperCase().split(""),
-//   ];
-
-//   answerTwoWithQuestion.forEach((letter, letterIndex) => {
-//     const replacementItem = grid.find((gridItem) => {
-//       return (
-//         gridItem.coordinates.y === letterIndex + 1 &&
-//         gridItem.coordinates.x === referenceGridItem.coordinates.x
-//       );
-//     });
-
-//     // this shouldn't work, potential source for bugs
-//     replacementItem.value = letter;
-//   });
-// };
-
-const enhanceGridSkelleton = (grid: Grid, unsortedItems: Data[]): Grid => {
-  // sort answers by length before processing data
-  const items = sortItemsDesc(unsortedItems);
-  const answerOneLetters = items[0].answer.toUpperCase().split("");
-  const answerTwoWithQuestion = [
-    items[1].question,
-    ...items[1].answer.toUpperCase().split(""),
-  ];
-
-  // placeFirstAnswerInGrid(grid, items);
-  // find word with one letter in common with the letters in the first word
-  // const answerTwo = items.find((item, index) => {
-  //   if (index !== 0) {
-  //     return findCommonElements(
-  //       item.answer.toUpperCase().split(""),
-  //       answerOneLetters
-  //     );
-  //   }
-  // });
-
+const enhanceGridSkelleton = (grid: Grid): Grid => {
   placeConfigInGridLayout(grid, crosswordConfig);
-
-  // get letters than intersect
-  const commonLetters = getCommonLetters(
-    items[1].answer.toUpperCase().split(""),
-    answerOneLetters
-  );
-
-  // get coordinates of items that intersect
-  let intersectingItems: Grid = [];
-  commonLetters.forEach((letter) => {
-    grid.forEach((gridItem) => {
-      if (gridItem.questions[0]?.value === letter) {
-        intersectingItems.push(gridItem);
-      }
-    });
-  });
-
-  // const answerFits = doesAnswerFitInGrid(answerTwo.answer, intersectingItems);
-
-  // if (answerFits?.intersectingItem)
-  //   placeSecondAnswerInGrid(grid, answerFits.intersectingItem, items);
-
   return grid;
 };
 
 export default function Home() {
   const skeleton = generateGridSkelleton();
-  const grid = enhanceGridSkelleton(skeleton, mockData.data);
-
-  // const selectSolutionCells = () => {
-  //   return grid.filter((gridItem) => {
-  //     if (gridItem.id === 22 || gridItem.id === 33) {
-  //       return gridItem;
-  //     }
-  //   });
-  // };
+  const grid = enhanceGridSkelleton(skeleton);
   const [gridState, setGridState] = useState(grid);
   const [shouldDisplayInfo, toggleCellInfo] = useState(false);
-  // const [solutionCells, setSolutionCells] = useState(selectSolutionCells());
-  // console.log(solutionCells);
-
-  // const updateGridValue = (id: number, value: string) => {
-  //   setGridState((prevGrid) =>
-  //     prevGrid.map((gridItem) => {
-  //       if (gridItem.id === id) {
-  //         return {
-  //           ...gridItem,
-  //           value: value.toUpperCase(),
-  //         };
-  //       }
-  //       return gridItem;
-  //     })
-  //   );
-  // };
-
-  // const updateSolutionValue = (id: number, value: string) => {
-  //   setSolutionCells((prevGrid) =>
-  //     prevGrid.map((gridItem) => {
-  //       if (gridItem.id === id) {
-  //         return {
-  //           ...gridItem,
-  //           value: value.toUpperCase(),
-  //         };
-  //       }
-  //       return gridItem;
-  //     })
-  //   );
-  // };
 
   return (
     <div className={styles.container}>
@@ -302,13 +216,18 @@ export default function Home() {
         </SolutionWordWrapper> */}
         <Grid itemCount={COLUMNS_COUNT}>
           {gridState.map((cell, index) => {
+            // console.log("➜ ~ cell", cell);
             const isSolutionKey = false;
 
-            // console.log({
-            //   x: cell.coordinates.x,
-            //   y: cell.coordinates.y,
-            //   isAdfield: cell.isAdField,
-            // });
+            // if (
+            //   cell.questions.length > 0 &&
+            //   cell.questions[0].questionDirection === "down"
+            // ) {
+            // get word for cell.questions[0].answerLength
+            // console.log("➜ ~ questionDirection", cell.questions[0]);
+            // const answer =
+            // }
+
             return (
               <Cell
                 size={cell.questions[0]?.value.length > 1 ? 4 : 8}
@@ -332,9 +251,13 @@ export default function Home() {
                     //   console.log("updateGridValue");
                     //   // updateGridValue(cell.id, e.target.value);
                   }}
-                  value={cell.questions.map((question) => {
-                    return question.value;
-                  })}
+                  value={
+                    cell.questions.length
+                      ? cell.questions.map((question) => {
+                          return question.value;
+                        })
+                      : cell.value
+                  }
                 />
               </Cell>
             );
@@ -347,6 +270,14 @@ export default function Home() {
     </div>
   );
 }
+
+/**
+ * fit random words in cells
+ *
+ * 1. on iteration: when question field found, check how many letter are need, selected word and place accordingly
+ * 2. proceed by filling all horizontal words
+ * 3. then try and merge in vertical words
+ */
 
 /**
  * Step 0:
@@ -372,26 +303,3 @@ export default function Home() {
  *   - make space for ads (image for now 😉)
  *
  */
-
-//  const basicWrapperObject = {
-//   coordinates: {
-//     start: {
-//       x: 1,
-//       y: 1,
-//     },
-//     end: {
-//       x: 3,
-//       y: 1,
-//     },
-//     direction: "horizontal",
-//     value: "Piano",
-//   },
-// };
-
-// const basicCellObject = {
-//   coordinates: {
-//     x: 1,
-//     y: 1,
-//   },
-//   value: "E",
-// };
